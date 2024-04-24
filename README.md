@@ -1,6 +1,6 @@
 # jsonparser
 
-This is an implementation of a JSON parser in C++. I built this as a learning experience on parsing.
+This is an implementation of a JSON parser in C++. I built this as a learning project on parsing.
 
 ## How to run
 

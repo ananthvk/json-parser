@@ -38,14 +38,14 @@ class Token
 
     bool is_value_present;
 
-    std::variant<std::string, int64_t, double> value;
+    std::variant<std::string, int64_t, long double> value;
 
     // Default constructor, which initializes the type to UNKNOWN
     Token() : type(Token::Type::UNKNOWN), is_value_present(false) {}
 
     int64_t &as_integer() { return std::get<int64_t>(value); }
 
-    double &as_real() { return std::get<double>(value); }
+    long double &as_real() { return std::get<long double>(value); }
 
     std::string &as_string() { return std::get<std::string>(value); }
 
@@ -290,6 +290,61 @@ class JSONLexer
     Token lex_number()
     {
         Token t;
+        std::string number;
+        bool decimal_point_found = false;
+        bool e_found = false;
+
+        if (symbol() == '-')
+        {
+            number.push_back('-');
+            advance();
+        }
+        char last = symbol();
+
+        while (available())
+        {
+            if (isdigit(symbol()))
+            {
+                number.push_back(symbol());
+            }
+            else if ((last == 'e' || last == 'E') && (symbol() == '-' || symbol() == '+'))
+            {
+                number.push_back(symbol());
+            }
+            else if (!decimal_point_found && symbol() == '.')
+            {
+                number.push_back(symbol());
+                decimal_point_found = true;
+            }
+            else if (!e_found && (symbol() == 'e' || symbol() == 'E'))
+            {
+                number.push_back(symbol());
+                e_found = true;
+            }
+            else if (symbol() == ' ' || symbol() == '\n' || symbol() == '\t' || symbol() == '\r' ||
+                     symbol() == '}' || symbol() == ']' || symbol() == ',')
+            {
+                break;
+            }
+            else
+            {
+                throw json_parse_error(std::string("Invalid literal '") + symbol() +
+                                       std::string("' for number"));
+            }
+            last = symbol();
+            advance();
+        }
+        if(decimal_point_found || e_found)
+        {
+            // A real number was found
+            t.type = Token::Type::NUMBER_REAL;
+            t.value = std::stold(number);
+        }
+        else
+        {
+            t.type = Token::Type::NUMBER_INTEGER;
+            t.value = std::stoll(number);
+        }
         return t;
     }
 

@@ -215,6 +215,57 @@ TEST(JSONLexer, SampleJSON)
     EXPECT_THROW(lexer.next(), json_lexer_empty_error);
 }
 
+TEST(JSONLexer, NumberIntegers)
+{
+    JSONLexer lex;
+    lex.load("1 3 12345 123456 7890 8180 23121231 4585 0 -3245 -0 -302 -5501 -8092 -760000 -81232");
+    while (lex.is_next())
+    {
+        auto token = lex.next();
+        ASSERT_EQ(token.type, Token::Type::NUMBER_INTEGER);
+    }
+
+    lex.load("-10 -8 -6 -4 -2 0 2 4 6 8 10 12 14");
+    for (int i = -10; i <= 14; i += 2)
+    {
+        auto token = lex.next();
+        ASSERT_EQ(token.as_integer(), i);
+    }
+}
+
+TEST(JSONLexer, NumberReal)
+{
+    JSONLexer lex;
+    lex.load("3.204 0.458 1.532 2.227818 6.154 -3.210 -0.32 -4.81 -5.67 -88.9120 3e2 4e-2 -3e-2 "
+             "-4e-2 81.312e5 -81.632e-3 21.452e+4 1e-2 1e2 -3e-2 2E2 2E+2 2E-2 -41.31 111113.0");
+
+    std::vector<long double> nums = {
+        3.204,    0.458, 1.532, 2.227818, 6.154, -3.210,   -0.32,      -4.81,     -5.67,
+        -88.9120, 3e2,   4e-2,  -3e-2,    -4e-2, 81.312e5, -81.632e-3, 21.452e+4, 1e-2,
+        1e2,      -3e-2, 2E2,   2E+2,     2E-2,  -41.31,   111113.0};
+
+    int i = 0;
+    while (lex.is_next())
+    {
+        auto token = lex.next();
+        ASSERT_EQ(token.type, Token::Type::NUMBER_REAL);
+        ASSERT_NEAR(nums[i], token.as_real(), 1e-5);
+        i++;
+    }
+
+    lex.load("-10 -8 -6 -4 -2 0 2 4 6 8 10 12 14");
+    for (i = -10; i <= 14; i += 2)
+    {
+        auto token = lex.next();
+        ASSERT_EQ(token.as_integer(), i);
+    }
+}
+
+TEST(JSONLexer, InvalidNumbers)
+{
+    
+}
+
 int main(int argc, char *argv[])
 {
     ::testing::InitGoogleTest(&argc, argv);

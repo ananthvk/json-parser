@@ -16,6 +16,33 @@ TEST(JSONLexer, Empty)
     EXPECT_THROW(lexer.next(), json_lexer_empty_error);
 }
 
+TEST(JSONLexer, SingleSymbolToken)
+{
+    JSONLexer lexer;
+
+    lexer.load("{[:,]}");
+    ASSERT_EQ(lexer.next().type, Token::Type::LEFT_BRACE);
+    ASSERT_EQ(lexer.next().type, Token::Type::LEFT_SQUARE);
+    ASSERT_EQ(lexer.next().type, Token::Type::COLON);
+    ASSERT_EQ(lexer.next().type, Token::Type::COMMA);
+    ASSERT_EQ(lexer.next().type, Token::Type::RIGHT_SQUARE);
+    ASSERT_EQ(lexer.next().type, Token::Type::RIGHT_BRACE);
+    ASSERT_EQ(lexer.is_next(), false);
+    EXPECT_THROW(lexer.next(), json_lexer_empty_error);
+
+    lexer.load("            {      \n       \t     \r    [\n\t\r      :            ,      ]     \n   \r} \t      ");
+    ASSERT_EQ(lexer.next().type, Token::Type::LEFT_BRACE);
+    ASSERT_EQ(lexer.next().type, Token::Type::LEFT_SQUARE);
+    ASSERT_EQ(lexer.next().type, Token::Type::COLON);
+    ASSERT_EQ(lexer.next().type, Token::Type::COMMA);
+    ASSERT_EQ(lexer.next().type, Token::Type::RIGHT_SQUARE);
+    ASSERT_EQ(lexer.next().type, Token::Type::RIGHT_BRACE);
+    
+    lexer.load("{");
+    ASSERT_EQ(lexer.next().type, Token::Type::LEFT_BRACE);
+
+}
+
 int main(int argc, char *argv[])
 {
     ::testing::InitGoogleTest(&argc, argv);

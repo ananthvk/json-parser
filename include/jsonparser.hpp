@@ -27,12 +27,19 @@ class Token
         NUMBER,
         BOOLEAN,
         LITERAL_NULL,
+
+        UNKNOWN
     } type;
+
+
+    bool is_value_present;
 
     std::string string_value;
     int64_t integer_value;
     double real_value;
     bool bool_value;
+
+    Token() : type(Token::Type::UNKNOWN), is_value_present(false) {}
 };
 
 class json_lexer_empty_error : public std::exception
@@ -82,14 +89,52 @@ class JSONLexer
         }
     }
 
-    // Get a single character token
-    Token get_character_token()
+    // Find a single symbol tokens such as braces, comma, etc
+    // Returns the token with type set to the token type if found, otherwise sets it to
+    // UNKNOWN, signifying that it may be some other type of token
+    Token lex_single_symbol_token()
     {
         Token token;
+        switch (symbol())
+        {
+        case '{':
+            token.type = Token::Type::LEFT_BRACE;
+            break;
+
+        case '}':
+            token.type = Token::Type::RIGHT_BRACE;
+            break;
+
+        case '[':
+            token.type = Token::Type::LEFT_SQUARE;
+            break;
+
+        case ']':
+            token.type = Token::Type::RIGHT_SQUARE;
+            break;
+
+        case ':':
+            token.type = Token::Type::COLON;
+            break;
+
+        case ',':
+            token.type = Token::Type::COMMA;
+            break;
+
+        default:
+            token.type = Token::Type::UNKNOWN;
+            break;
+        }
+        // If the current symbol was a valid token, advance to the next symbol
+        if (token.type != Token::Type::UNKNOWN)
+            advance();
+        return token;
     }
 
 
   public:
+    JSONLexer() : idx(0) {}
+
     JSONLexer(const std::string &buffer) : buffer(buffer), idx(0) {}
 
     // Returns the next token
@@ -103,7 +148,10 @@ class JSONLexer
             throw json_lexer_empty_error();
 
         Token token;
-        token.type = Token::Type::BOOLEAN;
+
+        if ((token = lex_single_symbol_token()).type != Token::Type::UNKNOWN)
+            return token;
+
         return token;
     }
 

@@ -71,7 +71,8 @@ TEST(JSONLexer, SimpleStrings)
     ASSERT_EQ(token.string_value.size(), 0);
 
     // Test that white spaces do not get removed within strings
-    lexer.load("                          \n\n\n\r\t        \"\n\nTwo newlines\n\n\rOne\r\"     \n\n\t\r      ");
+    lexer.load("                          \n\n\n\r\t        \"\n\nTwo newlines\n\n\rOne\r\"     "
+               "\n\n\t\r      ");
     token = lexer.next();
     ASSERT_EQ(token.type, Token::Type::STRING);
     ASSERT_EQ(token.string_value, "\n\nTwo newlines\n\n\rOne\r");
@@ -82,28 +83,26 @@ TEST(JSONLexer, UnterminatedString)
     JSONLexer lexer;
     lexer.load("\"");
     ASSERT_EQ(lexer.is_next(), true);
-    EXPECT_THROW(lexer.next(), json_lexer_unterminated_string);
+    EXPECT_THROW(lexer.next(), json_parse_error);
     EXPECT_THROW(lexer.next(), json_lexer_empty_error);
 
     lexer.load("\"Some unterminated content here....");
     ASSERT_EQ(lexer.is_next(), true);
-    EXPECT_THROW(lexer.next(), json_lexer_unterminated_string);
+    EXPECT_THROW(lexer.next(), json_parse_error);
     EXPECT_THROW(lexer.next(), json_lexer_empty_error);
-    
+
     lexer.load("{,\"this");
     ASSERT_EQ(lexer.next().type, Token::Type::LEFT_BRACE);
     ASSERT_EQ(lexer.next().type, Token::Type::COMMA);
-    EXPECT_THROW(lexer.next(), json_lexer_unterminated_string);
+    EXPECT_THROW(lexer.next(), json_parse_error);
     EXPECT_THROW(lexer.next(), json_lexer_empty_error);
-    
 }
-
 
 TEST(JSONLexer, StringAlongWithOtherTokens)
 {
     JSONLexer lexer;
     lexer.load(R"(   {"key" : "value"}   )");
-    
+
     auto token = lexer.next();
     ASSERT_EQ(token.type, Token::Type::LEFT_BRACE);
 
@@ -120,6 +119,72 @@ TEST(JSONLexer, StringAlongWithOtherTokens)
 
     token = lexer.next();
     ASSERT_EQ(token.type, Token::Type::RIGHT_BRACE);
+}
+
+TEST(JSONLexer, StringWithUnicodeChars)
+{
+    JSONLexer lexer;
+    lexer.load(R"(  "😁" )");
+    auto token = lexer.next();
+    ASSERT_EQ(token.type, Token::Type::STRING);
+    ASSERT_EQ(token.string_value, "😁");
+}
+
+TEST(JSONLexer, StringWithEscapeCharacters)
+{
+    JSONLexer lexer;
+
+    struct s
+    {
+        std::string s1;
+        std::string s2;
+    };
+
+    std::vector<s> escaped = {
+        {R"( "\"" )", "\""}, {R"( "\\" )", "\\"}, {R"( "\/" )", "/"},  {R"( "\b" )", "\b"},
+        {R"( "\f" )", "\f"}, {R"( "\n" )", "\n"}, {R"( "\r" )", "\r"}, {R"( "\t" )", "\t"},
+    };
+    for (auto &e : escaped)
+    {
+        lexer.load(e.s1);
+        auto token = lexer.next();
+        ASSERT_EQ(token.type, Token::Type::STRING);
+        ASSERT_EQ(token.string_value, e.s2);
+    }
+    
+}
+TEST(JSONLexer, StringWithEscapeCombined)
+{
+    JSONLexer lexer;
+    lexer.load(R"( "\"\\" )");
+
+    auto token = lexer.next();
+    ASSERT_EQ(token.string_value, "\"\\");
+
+    lexer.load(R"(     "\"\\\/\b\f\n\r\t"    )");
+    token = lexer.next();
+    ASSERT_EQ(token.string_value, "\"\\/\b\f\n\r\t");
+
+    lexer.load(R"(     "\nThis is line one\nThis is line two\nThis is line three\n"    )");
+    token = lexer.next();
+    ASSERT_EQ(token.string_value, "\nThis is line one\nThis is line two\nThis is line three\n");
+
+}
+
+TEST(JSONLexer, StringWithEscapeCharactersError)
+{
+    JSONLexer lexer;
+    lexer.load(R"( "This is some\ka " )");
+    EXPECT_THROW(lexer.next(), json_parse_error);
+
+    lexer.load(R"( "This is some\")");
+    EXPECT_THROW(lexer.next(), json_parse_error);
+
+    lexer.load(R"( "This is some\\\")");
+    EXPECT_THROW(lexer.next(), json_parse_error);
+
+    lexer.load(R"(     "\"\\\/\b\f\n\r\t\"    )");
+    EXPECT_THROW(lexer.next(), json_parse_error);
 }
 
 int main(int argc, char *argv[])

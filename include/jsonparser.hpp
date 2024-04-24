@@ -101,14 +101,26 @@ class json_lexer_empty_error : public std::exception
     const char *what() const noexcept override { return message.c_str(); }
 };
 
-class json_lexer_unterminated_string : public std::exception
+class json_lexer_not_implemented_error : public std::exception
 {
     std::string message;
 
   public:
-    json_lexer_unterminated_string() : message("Unterminated string literal") {}
+    json_lexer_not_implemented_error() : message("This feature has not yet been implemented") {}
 
-    json_lexer_unterminated_string(const std::string &message) : message(message) {}
+    json_lexer_not_implemented_error(const std::string &message) : message(message) {}
+
+    const char *what() const noexcept override { return message.c_str(); }
+};
+
+class json_parse_error : public std::exception
+{
+    std::string message;
+
+  public:
+    json_parse_error() : message("This feature has not yet been implemented") {}
+
+    json_parse_error(const std::string &message) : message(message) {}
 
     const char *what() const noexcept override { return message.c_str(); }
 };
@@ -192,6 +204,7 @@ class JSONLexer
 
     Token lex_string()
     {
+        // https://en.cppreference.com/w/cpp/language/escape
         // Check start of a string
         Token token;
         if (symbol() != '"')
@@ -203,6 +216,50 @@ class JSONLexer
 
         while (available())
         {
+            // Check for escape sequence
+            while (available() && symbol() == '\\')
+            {
+                advance();
+                // There has to be atleast one character after a reverse solidus
+                if (!available())
+                    throw json_parse_error("Unterminated string literal");
+
+                if (symbol() == '/')
+                    token.string_value.push_back('/');
+
+                else if (symbol() == '\\')
+                    token.string_value.push_back('\\');
+
+                else if (symbol() == '"')
+                    token.string_value.push_back('"');
+
+                else if (symbol() == 'b')
+                    token.string_value.push_back('\b');
+
+                else if (symbol() == 'f')
+                    token.string_value.push_back('\f');
+
+                else if (symbol() == 'n')
+                    token.string_value.push_back('\n');
+
+                else if (symbol() == 'r')
+                    token.string_value.push_back('\r');
+
+                else if (symbol() == 't')
+                    token.string_value.push_back('\t');
+
+                else if (symbol() == 'u')
+                    throw json_lexer_not_implemented_error("Unicode is not yet implemented");
+
+                else
+                    throw json_parse_error("Invalid escape character");
+
+                advance();
+            }
+            if (!available())
+                throw json_parse_error("Unterminated string literal");
+
+            // TODO: Implement unicode escape sequence, checking of control characters
             // Found end of string
             if (symbol() == '"')
             {
@@ -214,7 +271,7 @@ class JSONLexer
             advance();
         }
         // Reached end of input without finding matching "
-        throw json_lexer_unterminated_string();
+        throw json_parse_error("Unterminated string literal");
     }
 
 

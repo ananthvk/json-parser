@@ -24,7 +24,8 @@ class Token
         COLON,
 
         STRING,
-        NUMBER,
+        NUMBER_REAL,
+        NUMBER_INTEGER,
         BOOLEAN,
         LITERAL_NULL,
 
@@ -40,6 +41,52 @@ class Token
     bool bool_value;
 
     Token() : type(Token::Type::UNKNOWN), is_value_present(false) {}
+
+    // Prints the token to std::cout for debugging
+    void debug()
+    {
+        std::cout << "Token( ";
+        switch (type)
+        {
+        case Type::RIGHT_BRACE:
+            std::cout << "}";
+            break;
+        case Type::LEFT_BRACE:
+            std::cout << "{";
+            break;
+        case Type::RIGHT_SQUARE:
+            std::cout << "]";
+            break;
+        case Type::LEFT_SQUARE:
+            std::cout << "[";
+            break;
+        case Type::COMMA:
+            std::cout << ",";
+            break;
+        case Type::COLON:
+            std::cout << ":";
+            break;
+        case Type::STRING:
+            std::cout << " \"" << string_value << "\"";
+            break;
+        case Type::NUMBER_REAL:
+            std::cout << real_value;
+            break;
+        case Type::NUMBER_INTEGER:
+            std::cout << integer_value;
+            break;
+        case Type::BOOLEAN:
+            std::cout << (bool_value ? "true" : "false");
+            break;
+        case Type::LITERAL_NULL:
+            std::cout << "null";
+            break;
+        case Type::UNKNOWN:
+            std::cout << "UNKNOWN";
+            break;
+        }
+        std::cout << " )";
+    }
 };
 
 class json_lexer_empty_error : public std::exception
@@ -50,6 +97,18 @@ class json_lexer_empty_error : public std::exception
     json_lexer_empty_error() : message("Cannot parse JSON, since input string is empty") {}
 
     json_lexer_empty_error(const std::string &message) : message(message) {}
+
+    const char *what() const noexcept override { return message.c_str(); }
+};
+
+class json_lexer_unterminated_string : public std::exception
+{
+    std::string message;
+
+  public:
+    json_lexer_unterminated_string() : message("Unterminated string literal") {}
+
+    json_lexer_unterminated_string(const std::string &message) : message(message) {}
 
     const char *what() const noexcept override { return message.c_str(); }
 };
@@ -131,6 +190,33 @@ class JSONLexer
         return token;
     }
 
+    Token lex_string()
+    {
+        // Check start of a string
+        Token token;
+        if (symbol() != '"')
+            // Not a string
+            return token;
+
+        token.type = Token::Type::STRING;
+        advance();
+
+        while (available())
+        {
+            // Found end of string
+            if (symbol() == '"')
+            {
+                advance();
+                return token;
+            }
+
+            token.string_value.push_back(symbol());
+            advance();
+        }
+        // Reached end of input without finding matching "
+        throw json_lexer_unterminated_string();
+    }
+
 
   public:
     JSONLexer() : idx(0) {}
@@ -150,6 +236,9 @@ class JSONLexer
         Token token;
 
         if ((token = lex_single_symbol_token()).type != Token::Type::UNKNOWN)
+            return token;
+
+        if ((token = lex_string()).type != Token::Type::UNKNOWN)
             return token;
 
         return token;

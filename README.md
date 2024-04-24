@@ -10,7 +10,7 @@ Clone the repository
 
 ```
 $ git clone https://github.com/ananthvk/json-parser
-$ cd jsonparser
+$ cd json-parser
 ```
 
 Then build and run the tests

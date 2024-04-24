@@ -8,10 +8,11 @@
 // https://www.json.org/json-en.html
 
 
-// A token class representing a token in JSON
+// A token class represents JSON token
 class Token
 {
   public:
+    // An enum which represents type of the token
     enum class Type : uint8_t
     {
         RIGHT_BRACE,
@@ -26,13 +27,17 @@ class Token
         STRING,
         NUMBER_REAL,
         NUMBER_INTEGER,
-        BOOLEAN,
+        LITERAL_TRUE,
+        LITERAL_FALSE,
         LITERAL_NULL,
 
         UNKNOWN
     } type;
 
 
+    // This is a very simple representation and wastes quite a bit of memory
+    // TODO: Use union / variant
+    // About 64 bytes of memory is used for representing an empty token
     bool is_value_present;
 
     std::string string_value;
@@ -40,6 +45,7 @@ class Token
     double real_value;
     bool bool_value;
 
+    // Default constructor, which initializes the type to UNKNOWN
     Token() : type(Token::Type::UNKNOWN), is_value_present(false) {}
 
     // Prints the token to std::cout for debugging
@@ -75,8 +81,11 @@ class Token
         case Type::NUMBER_INTEGER:
             std::cout << integer_value;
             break;
-        case Type::BOOLEAN:
-            std::cout << (bool_value ? "true" : "false");
+        case Type::LITERAL_TRUE:
+            std::cout << "true";
+            break;
+        case Type::LITERAL_FALSE:
+            std::cout << "false";
             break;
         case Type::LITERAL_NULL:
             std::cout << "null";
@@ -89,6 +98,7 @@ class Token
     }
 };
 
+// Thrown when there are no more characters to process
 class json_lexer_empty_error : public std::exception
 {
     std::string message;
@@ -101,6 +111,7 @@ class json_lexer_empty_error : public std::exception
     const char *what() const noexcept override { return message.c_str(); }
 };
 
+// Thrown for a feature which is not implemented
 class json_lexer_not_implemented_error : public std::exception
 {
     std::string message;
@@ -113,6 +124,7 @@ class json_lexer_not_implemented_error : public std::exception
     const char *what() const noexcept override { return message.c_str(); }
 };
 
+// Thrown for any syntax/lexical error
 class json_parse_error : public std::exception
 {
     std::string message;
@@ -125,7 +137,7 @@ class json_parse_error : public std::exception
     const char *what() const noexcept override { return message.c_str(); }
 };
 
-// Lexes the input and produces a stream of JSON tokens
+// Scans the input and produces a stream of JSON tokens
 class JSONLexer
 {
     std::string buffer;
@@ -142,6 +154,7 @@ class JSONLexer
     // Returns true if there are more characters to be processed
     bool available() { return idx < buffer.size(); }
 
+    // Skip whitespace characters
     void skip_whitespace()
     {
         while (available())
@@ -202,10 +215,10 @@ class JSONLexer
         return token;
     }
 
+
+    // Scans the input for a string, a string begins and terminates with a "
     Token lex_string()
     {
-        // https://en.cppreference.com/w/cpp/language/escape
-        // Check start of a string
         Token token;
         if (symbol() != '"')
             // Not a string

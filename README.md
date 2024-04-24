@@ -9,7 +9,7 @@ Firstly, install [meson](https://github.com/mesonbuild/meson) and [ninja](https:
 Clone the repository
 
 ```
-$ git clone https://github.com/ananthvk/jsonparser
+$ git clone https://github.com/ananthvk/json-parser
 $ cd jsonparser
 ```
 

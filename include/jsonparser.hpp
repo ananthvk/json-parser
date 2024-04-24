@@ -3,6 +3,7 @@
 #include <iostream>
 #include <stdint.h>
 #include <string>
+#include <variant>
 
 // https://www.rfc-editor.org/rfc/rfc8259.txt
 // https://www.json.org/json-en.html
@@ -35,18 +36,18 @@ class Token
     } type;
 
 
-    // This is a very simple representation and wastes quite a bit of memory
-    // TODO: Use union / variant
-    // About 64 bytes of memory is used for representing an empty token
     bool is_value_present;
 
-    std::string string_value;
-    int64_t integer_value;
-    double real_value;
-    bool bool_value;
+    std::variant<std::string, int64_t, double> value;
 
     // Default constructor, which initializes the type to UNKNOWN
     Token() : type(Token::Type::UNKNOWN), is_value_present(false) {}
+
+    int64_t& as_integer() { return std::get<int64_t>(value); }
+
+    double& as_real() { return std::get<double>(value); }
+
+    std::string& as_string() { return std::get<std::string>(value); }
 
     // Prints the token to std::cout for debugging
     void debug()
@@ -73,13 +74,13 @@ class Token
             std::cout << ":";
             break;
         case Type::STRING:
-            std::cout << " \"" << string_value << "\"";
+            std::cout << " \"" << as_string() << "\"";
             break;
         case Type::NUMBER_REAL:
-            std::cout << real_value;
+            std::cout << as_real();
             break;
         case Type::NUMBER_INTEGER:
-            std::cout << integer_value;
+            std::cout << as_integer();
             break;
         case Type::LITERAL_TRUE:
             std::cout << "true";
@@ -215,7 +216,6 @@ class JSONLexer
         return token;
     }
 
-
     // Scans the input for a string, a string begins and terminates with a "
     Token lex_string()
     {
@@ -238,28 +238,28 @@ class JSONLexer
                     throw json_parse_error("Unterminated string literal");
 
                 if (symbol() == '/')
-                    token.string_value.push_back('/');
+                    token.as_string().push_back('/');
 
                 else if (symbol() == '\\')
-                    token.string_value.push_back('\\');
+                    token.as_string().push_back('\\');
 
                 else if (symbol() == '"')
-                    token.string_value.push_back('"');
+                    token.as_string().push_back('"');
 
                 else if (symbol() == 'b')
-                    token.string_value.push_back('\b');
+                    token.as_string().push_back('\b');
 
                 else if (symbol() == 'f')
-                    token.string_value.push_back('\f');
+                    token.as_string().push_back('\f');
 
                 else if (symbol() == 'n')
-                    token.string_value.push_back('\n');
+                    token.as_string().push_back('\n');
 
                 else if (symbol() == 'r')
-                    token.string_value.push_back('\r');
+                    token.as_string().push_back('\r');
 
                 else if (symbol() == 't')
-                    token.string_value.push_back('\t');
+                    token.as_string().push_back('\t');
 
                 else if (symbol() == 'u')
                     throw json_lexer_not_implemented_error("Unicode is not yet implemented");
@@ -280,7 +280,7 @@ class JSONLexer
                 return token;
             }
 
-            token.string_value.push_back(symbol());
+            token.as_string().push_back(symbol());
             advance();
         }
         // Reached end of input without finding matching "

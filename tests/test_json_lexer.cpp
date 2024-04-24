@@ -8,11 +8,11 @@ TEST(JSONLexer, Empty)
     EXPECT_THROW(lexer.next(), json_lexer_empty_error);
 
     lexer.load("            ");
-    ASSERT_EQ(lexer.is_next(), true);
+    ASSERT_EQ(lexer.is_next(), false);
     EXPECT_THROW(lexer.next(), json_lexer_empty_error);
 
     lexer.load(" \n \n\n    \t\t\r    \r\n\n\n        \n    ");
-    ASSERT_EQ(lexer.is_next(), true);
+    ASSERT_EQ(lexer.is_next(), false);
     EXPECT_THROW(lexer.next(), json_lexer_empty_error);
 }
 
@@ -184,6 +184,35 @@ TEST(JSONLexer, StringWithEscapeCharactersError)
 
     lexer.load(R"(     "\"\\\/\b\f\n\r\t\"    )");
     EXPECT_THROW(lexer.next(), json_parse_error);
+}
+
+TEST(JSONLexer, SampleJSON)
+{
+    JSONLexer lexer;
+    lexer.load(R"( {"name" : "Ginger", "type" : "cat", "likes": ["toys", "food"]} )");
+    ASSERT_EQ(lexer.next().type, Token::Type::LEFT_BRACE);
+
+    ASSERT_EQ(lexer.next().type, Token::Type::STRING);
+    ASSERT_EQ(lexer.next().type, Token::Type::COLON);
+    ASSERT_EQ(lexer.next().type, Token::Type::STRING);
+    ASSERT_EQ(lexer.next().type, Token::Type::COMMA);
+
+    ASSERT_EQ(lexer.next().type, Token::Type::STRING);
+    ASSERT_EQ(lexer.next().type, Token::Type::COLON);
+    ASSERT_EQ(lexer.next().type, Token::Type::STRING);
+    ASSERT_EQ(lexer.next().type, Token::Type::COMMA);
+
+    ASSERT_EQ(lexer.next().type, Token::Type::STRING);
+    ASSERT_EQ(lexer.next().type, Token::Type::COLON);
+
+    ASSERT_EQ(lexer.next().type, Token::Type::LEFT_SQUARE);
+    ASSERT_EQ(lexer.next().type, Token::Type::STRING);
+    ASSERT_EQ(lexer.next().type, Token::Type::COMMA);
+    ASSERT_EQ(lexer.next().type, Token::Type::STRING);
+    ASSERT_EQ(lexer.next().type, Token::Type::RIGHT_SQUARE);
+
+    ASSERT_EQ(lexer.next().type, Token::Type::RIGHT_BRACE);
+    EXPECT_THROW(lexer.next(), json_lexer_empty_error);
 }
 
 int main(int argc, char *argv[])

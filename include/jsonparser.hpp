@@ -43,11 +43,11 @@ class Token
     // Default constructor, which initializes the type to UNKNOWN
     Token() : type(Token::Type::UNKNOWN), is_value_present(false) {}
 
-    int64_t& as_integer() { return std::get<int64_t>(value); }
+    int64_t &as_integer() { return std::get<int64_t>(value); }
 
-    double& as_real() { return std::get<double>(value); }
+    double &as_real() { return std::get<double>(value); }
 
-    std::string& as_string() { return std::get<std::string>(value); }
+    std::string &as_string() { return std::get<std::string>(value); }
 
     // Prints the token to std::cout for debugging
     void debug()
@@ -287,6 +287,12 @@ class JSONLexer
         throw json_parse_error("Unterminated string literal");
     }
 
+    Token lex_number()
+    {
+        Token t;
+        return t;
+    }
+
 
   public:
     JSONLexer() : idx(0) {}
@@ -296,9 +302,6 @@ class JSONLexer
     // Returns the next token
     Token next()
     {
-        // Skip leading whitespaces
-        skip_whitespace();
-
         // If we have reached the end of the buffer, throw an error
         if (!is_next())
             throw json_lexer_empty_error();
@@ -311,6 +314,9 @@ class JSONLexer
         if ((token = lex_string()).type != Token::Type::UNKNOWN)
             return token;
 
+        if ((token = lex_number()).type != Token::Type::UNKNOWN)
+            return token;
+
         return token;
     }
 
@@ -320,8 +326,10 @@ class JSONLexer
         idx = 0;
     }
 
-    // Returns true if there can be any more tokens
-    // Note: If there are trailing whitespaces, this function returns true even though there are no
-    // more tokens
-    bool is_next() { return idx < buffer.size(); }
+    // Returns true if there are more tokens
+    bool is_next()
+    {
+        skip_whitespace();
+        return idx < buffer.size();
+    }
 };

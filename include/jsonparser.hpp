@@ -162,5 +162,7 @@ class JSONLexer
     }
 
     // Returns true if there can be any more tokens
+    // Note: If there are trailing whitespaces, this function returns true even though there are no
+    // more tokens
     bool is_next() { return idx < buffer.size(); }
 };

@@ -8,11 +8,11 @@ endif
 gtest_dep = dependency('gtest')
 
 e = executable(
-    'test_jsonparser',
-    sources: ['tests/test_jsonparser.cpp'],
+    'test_json_lexer',
+    sources: ['tests/test_json_lexer.cpp'],
     dependencies : [ gtest_dep ],
     include_directories: ['include'],
     cpp_args: extra_args
 )
 
-test('test_jsonparser', e)
+test('test_json_lexer', e)

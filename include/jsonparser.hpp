@@ -51,22 +51,46 @@ class json_lexer_empty_error : public std::exception
 class JSONLexer
 {
     std::string buffer;
-    size_t current_char_idx;
+
+    // idx is the index of the next character to be processed
+    size_t idx;
+
+    // Returns the character to be processed
+    char symbol() { return buffer[idx]; }
+
+    // Updates idx to point to the next character
+    void advance() { idx++; }
+
+    // Returns true if there are more characters to be processed
+    bool available() { return idx < buffer.size(); }
 
     void skip_whitespace()
     {
-        while (current_char_idx < buffer.size())
+        while (available())
         {
-            if (buffer[current_char_idx] == ' ' || buffer[current_char_idx] == '\n' ||
-                buffer[current_char_idx] == '\r' || buffer[current_char_idx] == '\t')
-                current_char_idx++;
-            else
+            switch (symbol())
+            {
+            case ' ':
+            case '\n':
+            case '\r':
+            case '\t':
+                advance();
                 break;
+            default:
+                return;
+            }
         }
     }
 
+    // Get a single character token
+    Token get_character_token()
+    {
+        Token token;
+    }
+
+
   public:
-    JSONLexer(const std::string &buffer) : buffer(buffer), current_char_idx(0) {}
+    JSONLexer(const std::string &buffer) : buffer(buffer), idx(0) {}
 
     // Returns the next token
     Token next()
@@ -86,9 +110,9 @@ class JSONLexer
     void load(const std::string &s)
     {
         buffer = s;
-        current_char_idx = 0;
+        idx = 0;
     }
 
     // Returns true if there can be any more tokens
-    bool is_next() { return current_char_idx < buffer.size(); }
+    bool is_next() { return idx < buffer.size(); }
 };

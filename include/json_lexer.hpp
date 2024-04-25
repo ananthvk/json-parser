@@ -174,6 +174,12 @@ class JSONLexer
         }
     }
 
+    bool is_stop()
+    {
+        return symbol() == ' ' || symbol() == '\n' || symbol() == '\t' || symbol() == '\r' ||
+               symbol() == '}' || symbol() == ']' || symbol() == ',';
+    }
+
     // Find a single symbol tokens such as braces, comma, etc
     // Returns the token with type set to the token type if found, otherwise sets it to
     // UNKNOWN, signifying that it may be some other type of token
@@ -299,6 +305,8 @@ class JSONLexer
             number.push_back('-');
             advance();
         }
+        if (!isdigit(symbol()))
+            return t;
         char last = symbol();
 
         while (available())
@@ -321,8 +329,7 @@ class JSONLexer
                 number.push_back(symbol());
                 e_found = true;
             }
-            else if (symbol() == ' ' || symbol() == '\n' || symbol() == '\t' || symbol() == '\r' ||
-                     symbol() == '}' || symbol() == ']' || symbol() == ',')
+            else if (is_stop())
             {
                 break;
             }
@@ -334,7 +341,7 @@ class JSONLexer
             last = symbol();
             advance();
         }
-        if(decimal_point_found || e_found)
+        if (decimal_point_found || e_found)
         {
             // A real number was found
             t.type = Token::Type::NUMBER_REAL;
@@ -346,6 +353,28 @@ class JSONLexer
             t.value = std::stoll(number);
         }
         return t;
+    }
+
+    Token lex_literal()
+    {
+        Token token;
+        std::string literal;
+        // Check for null, true and false
+        while (available() && !is_stop())
+        {
+            literal.push_back(symbol());
+            advance();
+        }
+        if (literal == "null")
+            token.type = Token::Type::LITERAL_NULL;
+        else if (literal == "true")
+            token.type = Token::Type::LITERAL_TRUE;
+        else if (literal == "false")
+            token.type = Token::Type::LITERAL_FALSE;
+        else
+            throw json_parse_error(std::string("Invalid literal \"") + std::string(literal) +
+                                   std::string("\" in json"));
+        return token;
     }
 
 
@@ -372,7 +401,11 @@ class JSONLexer
         if ((token = lex_number()).type != Token::Type::UNKNOWN)
             return token;
 
-        return token;
+        if ((token = lex_literal()).type != Token::Type::UNKNOWN)
+            return token;
+
+        else
+            throw json_parse_error("Invalid JSON");
     }
 
     void load(const std::string &s)

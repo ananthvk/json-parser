@@ -1,4 +1,4 @@
-#include "jsonparser.hpp"
+#include "json_lexer.hpp"
 #include "gtest/gtest.h"
 
 TEST(JSONLexer, Empty)
@@ -263,7 +263,65 @@ TEST(JSONLexer, NumberReal)
 
 TEST(JSONLexer, InvalidNumbers)
 {
-    
+    JSONLexer lexer;
+    lexer.load("3-3");
+    EXPECT_THROW(lexer.next(), json_parse_error);
+
+    lexer.load("3...3");
+    EXPECT_THROW(lexer.next(), json_parse_error);
+
+    lexer.load(".33.");
+    EXPECT_THROW(lexer.next(), json_parse_error);
+
+    lexer.load("4.-5");
+    EXPECT_THROW(lexer.next(), json_parse_error);
+
+    lexer.load("632a45.2");
+    EXPECT_THROW(lexer.next(), json_parse_error);
+
+    lexer.load("63245.32ee2");
+    EXPECT_THROW(lexer.next(), json_parse_error);
+
+    lexer.load("63245e2.32e-2");
+    EXPECT_THROW(lexer.next(), json_parse_error);
+
+    lexer.load("0xfffa");
+    EXPECT_THROW(lexer.next(), json_parse_error);
+}
+
+TEST(JSONLexer, Literals)
+{
+    JSONLexer lexer;
+    lexer.load("true false null invalid");
+    ASSERT_EQ(lexer.next().type, Token::Type::LITERAL_TRUE);
+    ASSERT_EQ(lexer.next().type, Token::Type::LITERAL_FALSE);
+    ASSERT_EQ(lexer.next().type, Token::Type::LITERAL_NULL);
+    EXPECT_THROW(lexer.next(), json_parse_error);
+}
+
+TEST(JSONLexer, CompleteJSON)
+{
+    JSONLexer lexer;
+    lexer.load(
+        R"(
+        {
+            "productId" : 3,
+            "productName" : "Computer",
+            "productPrice" : 320.045,
+            "productAvailable" : true,
+            "URL": {
+                "lastUpdated" : "2024-04-25",
+                "valid": false,
+                "resource": null,
+                "status": [200, 400, 404]
+            },
+            "relatedProducts": [32, 24, 45, 51, 67]
+        }
+        )");
+    while (lexer.is_next())
+    {
+        ASSERT_NE(lexer.next().type, Token::Type::UNKNOWN);
+    }
 }
 
 int main(int argc, char *argv[])

@@ -7,11 +7,13 @@ endif
 
 gtest_dep = dependency('gtest')
 
+sources = ['tests/test_json_lexer.cpp', 'src/json_exceptions.cpp', 'src/json_lexer.cpp', 'src/json_parser.cpp', 'src/token.cpp']
+
 e = executable(
     'test_json_lexer',
-    sources: ['tests/test_json_lexer.cpp'],
+    sources: sources,
     dependencies : [ gtest_dep ],
-    include_directories: ['include'],
+    include_directories: ['include', 'src'],
     cpp_args: extra_args
 )
 

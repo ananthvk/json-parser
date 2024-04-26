@@ -4,7 +4,7 @@
 TEST(JSONParser, Empty)
 {
     JSONParser parser;
-    EXPECT_THROW(parser.parse(""), json_lexer_empty_error);
+    EXPECT_THROW(parser.parse(""), json_parse_error);
 
     parser.parse("{}");
     auto tree = parser.get_tree();

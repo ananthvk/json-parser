@@ -114,7 +114,7 @@ Token JSONLexer::lex_string()
                 token.as_string().push_back('\t');
 
             else if (symbol() == 'u')
-                throw json_lexer_not_implemented_error("Unicode is not yet implemented");
+                throw json_not_implemented_error("Unicode is not yet implemented");
 
             else
                 throw json_parse_error("Invalid escape character");
@@ -233,7 +233,7 @@ Token JSONLexer::next()
 {
     // If we have reached the end of the buffer, throw an error
     if (!is_next())
-        throw json_lexer_empty_error();
+        throw json_parse_error();
 
     Token token;
 

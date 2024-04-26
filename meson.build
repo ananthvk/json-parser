@@ -46,18 +46,24 @@ sources = [
 
 include_dirs = ['include', 'src']
 
-lib = library('jsonparser', sources, include_directories: include_dirs)
+lib = library(
+    'jsonparser',
+    sources,
+    include_directories: include_dirs,
+    cpp_args: extra_args,
+)
 
 tests = ['test_json_lexer', 'test_json_parser']
 
-foreach s : tests 
+foreach s : tests
     e = executable(
         s,
         sources: ['tests/' + s + '.cpp'],
-        dependencies : [ gtest_dep ],
+        dependencies: [gtest_dep],
         include_directories: include_dirs,
         cpp_args: extra_args,
-        link_with: lib
+        link_with: lib,
+        cpp_args: extra_args
     )
     test(s, e)
 endforeach

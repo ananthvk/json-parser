@@ -3,17 +3,18 @@
 
 TEST(JSONParser, Empty)
 {
-    //JSONParser parser;
+    JSONParser parser;
+    EXPECT_THROW(parser.parse(""), json_lexer_empty_error);
 
-    //EXPECT_THROW(parser.parse(""), json_lexer_empty_error);
+    parser.parse("{}");
+    auto tree = parser.get_tree();
+    ASSERT_EQ(tree.type, JSONObjectType::OBJECT);
+    ASSERT_EQ(tree.size(), 0);
 
-    //parser.parse("{}");
-    //auto tree = parser.get_tree();
-    //ASSERT_EQ(tree.size(), 0);
-
-    // parser.parse("[]");
-    // tree = parser.get_tree();
-    // ASSERT_EQ(tree.size(), 0);
+    parser.parse("[]");
+    tree = parser.get_tree();
+    ASSERT_EQ(tree.size(), 0);
+    ASSERT_EQ(tree.type, JSONObjectType::ARRAY);
 }
 
 TEST(JSONParser, SimpleValues)
@@ -21,6 +22,7 @@ TEST(JSONParser, SimpleValues)
     JSONParser parser(R"( {"key": "value", "name": "hello", "address": "world"} )");
     auto tree = parser.get_tree();
     ASSERT_EQ(tree.size(), 3);
+    ASSERT_EQ(tree.type, JSONObjectType::OBJECT);
     ASSERT_EQ(tree["key"].as_string(), "value");
     ASSERT_EQ(tree["name"].as_string(), "hello");
     ASSERT_EQ(tree["address"].as_string(), "world");
@@ -50,9 +52,14 @@ TEST(JSONParser, SimpleValues)
     ASSERT_EQ(tree.type, JSONObjectType::BOOLEAN);
     ASSERT_EQ(tree.as_bool(), false);
 
-    parser.parse(" null { ");
+    parser.parse(" null ");
     tree = parser.get_tree();
     ASSERT_EQ(tree.type, JSONObjectType::NULL_VALUE);
+
+    parser.parse(R"( {"key": null } )");
+    tree = parser.get_tree();
+    ASSERT_EQ(tree.type, JSONObjectType::OBJECT);
+    ASSERT_EQ(tree["key"].type, JSONObjectType::NULL_VALUE);
 }
 
 int main(int argc, char *argv[])

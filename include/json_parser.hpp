@@ -34,13 +34,40 @@ struct JSONObject
 
     JSONObject() : type(JSONObjectType::OBJECT), value(std::map<std::string, JSONObject>()) {}
 
-    JSONObject(JSONObjectType type) : type(type) {}
+    JSONObject(JSONObjectType type) : type(type)
+    {
+        switch (type)
+        {
+        case JSONObjectType::NUMBER_REAL:
+            value = 0.0;
+            break;
+        case JSONObjectType::NUMBER_INT:
+            value = 0;
+            break;
+        case JSONObjectType::STRING:
+            value = "";
+            break;
+        case JSONObjectType::BOOLEAN:
+            value = false;
+            break;
+        case JSONObjectType::OBJECT:
+            value = std::map<std::string, JSONObject>();
+            break;
+        case JSONObjectType::ARRAY:
+            value = std::vector<JSONObject>();
+            break;
+        default:
+            break;
+        }
+    }
 
     JSONObject(int64_t val) : type(JSONObjectType::NUMBER_INT), value(val) {}
 
     JSONObject(long double val) : type(JSONObjectType::NUMBER_REAL), value(val) {}
 
     JSONObject(const std::string &val) : type(JSONObjectType::STRING), value(val) {}
+
+    JSONObject(const std::vector<JSONObject> &val) : type(JSONObjectType::ARRAY), value(val) {}
 
     JSONObject(bool val) : type(JSONObjectType::BOOLEAN), value(val) {}
 
@@ -114,10 +141,12 @@ class JSONParser
             return JSONObject(token.as_real());
             break;
         case Token::Type::LEFT_BRACE:
-            // TODO: Process an object
+            tokens.push(token);
+            return parse_object();
             break;
         case Token::Type::LEFT_SQUARE:
-            // TODO: Process an array
+            tokens.push(token);
+            return parse_array();
             break;
         case Token::Type::LITERAL_TRUE:
             return JSONObject(true);
@@ -182,13 +211,21 @@ class JSONParser
         // Remove the left brace
         next();
 
+        token = peek();
+        if (token.type == Token::Type::RIGHT_BRACE)
+        {
+            // This is an empty object
+            next();
+            return JSONObject();
+        }
+
         auto pairs = parse_pairs();
 
         // Find the closing brace
         token = peek();
         if (token.type != Token::Type::RIGHT_BRACE)
         {
-            throw json_parse_error("Expected \"{\", found ", token);
+            throw json_parse_error("Expected \"}\", found ", token);
         }
         next();
 
@@ -198,6 +235,60 @@ class JSONParser
             ob[pair.first] = pair.second;
         }
         return ob;
+    }
+
+    std::vector<JSONObject> parse_elements()
+    {
+        std::vector<JSONObject> result;
+        result.push_back(parse_value());
+        while (1)
+        {
+            auto token = peek();
+            if (token.type == Token::Type::COMMA)
+            {
+                // Remove the comma token
+                next();
+                // Find the next element
+                result.push_back(parse_value());
+            }
+            else
+            {
+                break;
+            }
+        }
+        return result;
+    }
+
+    JSONObject parse_array()
+    {
+        auto token = peek();
+        if (token.type != Token::Type::LEFT_SQUARE)
+        {
+            // Not an array
+            return JSONObject(JSONObjectType::EMPTY);
+        }
+        // Remove the left square parenthesis
+        next();
+
+        token = peek();
+        if (token.type == Token::Type::RIGHT_SQUARE)
+        {
+            // This is an empty array
+            next();
+            return JSONObject(JSONObjectType::ARRAY);
+        }
+
+        auto elements = parse_elements();
+
+        // Find the closing parenthesis
+        token = peek();
+        if (token.type != Token::Type::RIGHT_SQUARE)
+        {
+            throw json_parse_error("Expected \"]\", found ", token);
+        }
+        next();
+
+        return JSONObject(elements);
     }
 
   public:
@@ -213,11 +304,7 @@ class JSONParser
         // elements = value | (value "," elements)
         // array = "[" elements "]" | "[" "]"
         // object = "{" pairs "}" | "{" "}"
-        // json = object | array | value
-        
-        root = parse_object();
-        if (root.type != JSONObjectType::EMPTY)
-            return;
+        // json = value
 
         root = parse_value();
     }

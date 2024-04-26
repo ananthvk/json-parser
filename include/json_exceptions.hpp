@@ -1,7 +1,7 @@
 #pragma once
+#include "token.hpp"
 #include <exception>
 #include <string>
-#include "token.hpp"
 
 // Thrown when there are no more characters to process
 class json_lexer_empty_error : public std::exception

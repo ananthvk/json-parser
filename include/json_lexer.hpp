@@ -1,6 +1,6 @@
 #pragma once
-#include "token.hpp"
 #include "json_exceptions.hpp"
+#include "token.hpp"
 
 // https://www.rfc-editor.org/rfc/rfc8259.txt
 // https://www.json.org/json-en.html

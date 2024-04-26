@@ -1,7 +1,7 @@
 #pragma once
 #include <iostream>
-#include <string>
 #include <stdint.h>
+#include <string>
 #include <variant>
 
 // A token class represents JSON token

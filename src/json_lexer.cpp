@@ -189,6 +189,8 @@ Token JSONLexer::lex_number()
     }
     if (decimal_point_found || e_found)
     {
+        if(number.back() == 'e' || number.back() == 'E' || number.back() == '+' || number.back() == '-')
+            throw json_parse_error("Incomplete number");
         // A real number was found
         t.type = Token::Type::NUMBER_REAL;
         t.value = std::stold(number);

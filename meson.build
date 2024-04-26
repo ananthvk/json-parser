@@ -41,6 +41,7 @@ sources = [
     'src/json_exceptions.cpp',
     'src/json_lexer.cpp',
     'src/json_parser.cpp',
+    'src/json_object.cpp',
     'src/token.cpp',
 ]
 
@@ -63,7 +64,7 @@ foreach s : tests
         include_directories: include_dirs,
         cpp_args: extra_args,
         link_with: lib,
-        cpp_args: extra_args
+        cpp_args: extra_args,
     )
     test(s, e)
 endforeach

@@ -202,6 +202,11 @@ void JSONParser::parse()
     // json = value
 
     root = parse_value();
+    if(lexer.is_next())
+    {
+        // There are more tokens after parsing, these tokens are invalid
+        throw json_parse_error("Extra tokens after parsing JSON");
+    }
 }
 
 void JSONParser::parse(const std::string &buffer)

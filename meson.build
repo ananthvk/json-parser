@@ -54,7 +54,7 @@ lib = library(
     cpp_args: extra_args,
 )
 
-tests = ['test_json_lexer', 'test_json_parser']
+tests = ['test_json_lexer', 'test_json_parser', 'test_json_errors']
 
 foreach s : tests
     e = executable(
@@ -64,7 +64,6 @@ foreach s : tests
         include_directories: include_dirs,
         cpp_args: extra_args,
         link_with: lib,
-        cpp_args: extra_args,
     )
-    test(s, e)
+    test(s, e, workdir: meson.current_source_dir())
 endforeach

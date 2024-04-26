@@ -16,7 +16,7 @@ class json_not_implemented_error : public std::exception
     const char *what() const noexcept override;
 };
 
-// Thrown for any syntax/lexical error
+// Thrown for any syntax/lexical error related to parsing of JSON
 class json_parse_error : public std::exception
 {
     std::string message;

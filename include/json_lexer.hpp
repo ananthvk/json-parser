@@ -6,34 +6,29 @@
 // https://www.json.org/json-en.html
 
 
-// Scans the input and produces a stream of JSON tokens
+// This class converts a sequence of characters into tokens, which can be consumed by the parser.
+// The data to be parsed is stored in a string variable buffer, and idx stores the index of
+// the character to be processed.
+// The main purpose of this class is to group logically related characters into tokens, which can then be parsed.
+// These details are abstracted by the methods symbol(), advance() and available()
 class JSONLexer
 {
     std::string buffer;
 
-    // idx is the index of the next character to be processed
     size_t idx;
 
-    // Returns the character to be processed
     char symbol();
 
-    // Updates idx to point to the next character
     void advance();
 
-    // Returns true if there are more characters to be processed
     bool available();
 
-    // Skip whitespace characters
     void skip_whitespace();
 
     bool is_stop();
 
-    // Find a single symbol tokens such as braces, comma, etc
-    // Returns the token with type set to the token type if found, otherwise sets it to
-    // UNKNOWN, signifying that it may be some other type of token
     Token lex_single_symbol_token();
 
-    // Scans the input for a string, a string begins and terminates with a "
     Token lex_string();
 
     Token lex_number();
@@ -46,11 +41,9 @@ class JSONLexer
 
     JSONLexer(const std::string &buffer);
 
-    // Returns the next token
     Token next();
 
     void load(const std::string &s);
 
-    // Returns true if there are more tokens
     bool is_next();
 };

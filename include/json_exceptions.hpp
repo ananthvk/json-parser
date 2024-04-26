@@ -40,3 +40,16 @@ class json_parse_error : public std::exception
 
     const char *what() const noexcept override;
 };
+
+// Thrown when invalid access is performed, for example trying to access key for integer object
+class json_access_error : public std::exception
+{
+    std::string message;
+
+  public:
+    json_access_error();
+
+    json_access_error(const std::string &message);
+
+    const char *what() const noexcept override;
+};

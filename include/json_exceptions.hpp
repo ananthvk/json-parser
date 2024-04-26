@@ -1,6 +1,7 @@
 #pragma once
 #include <exception>
 #include <string>
+#include "token.hpp"
 
 // Thrown when there are no more characters to process
 class json_lexer_empty_error : public std::exception
@@ -37,6 +38,8 @@ class json_parse_error : public std::exception
     json_parse_error();
 
     json_parse_error(const std::string &message);
+
+    json_parse_error(const std::string &message, const Token &tok);
 
     const char *what() const noexcept override;
 };

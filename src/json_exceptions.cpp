@@ -25,6 +25,11 @@ json_parse_error::json_parse_error() : message("Error parsing JSON") {}
 
 json_parse_error::json_parse_error(const std::string &message) : message(message) {}
 
+json_parse_error::json_parse_error(const std::string &message, const Token &tok)
+    : message(message + tok.as_exception_string())
+{
+}
+
 const char *json_parse_error::what() const noexcept { return message.c_str(); }
 
 json_access_error::json_access_error() : message("Invalid access") {}

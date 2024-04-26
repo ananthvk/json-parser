@@ -18,15 +18,15 @@ TEST(JSONParser, Empty)
 
 TEST(JSONParser, SimpleValues)
 {
-    // JSONParser parser(R"( {"key": "value", "name": "hello", "address": "world"} )");
-    // auto tree = parser.get_tree();
-    // ASSERT_EQ(tree.size(), 3);
-    // ASSERT_EQ(tree["key"].as_string(), "value");
-    // ASSERT_EQ(tree["name"].as_string(), "hello");
-    // ASSERT_EQ(tree["address"].as_string(), "world");
-
-    JSONParser parser(R"( "hello world" )");
+    JSONParser parser(R"( {"key": "value", "name": "hello", "address": "world"} )");
     auto tree = parser.get_tree();
+    ASSERT_EQ(tree.size(), 3);
+    ASSERT_EQ(tree["key"].as_string(), "value");
+    ASSERT_EQ(tree["name"].as_string(), "hello");
+    ASSERT_EQ(tree["address"].as_string(), "world");
+
+    parser.parse(R"( "hello world" )");
+    tree = parser.get_tree();
     ASSERT_EQ(tree.type, JSONObjectType::STRING);
     ASSERT_EQ(tree.as_string(), "hello world");
 
@@ -50,7 +50,7 @@ TEST(JSONParser, SimpleValues)
     ASSERT_EQ(tree.type, JSONObjectType::BOOLEAN);
     ASSERT_EQ(tree.as_bool(), false);
 
-    parser.parse(" null ");
+    parser.parse(" null { ");
     tree = parser.get_tree();
     ASSERT_EQ(tree.type, JSONObjectType::NULL_VALUE);
 }

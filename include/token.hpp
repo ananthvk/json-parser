@@ -46,4 +46,6 @@ class Token
 
     // Prints the token to std::cout for debugging
     void debug();
+
+    std::string as_exception_string() const;
 };

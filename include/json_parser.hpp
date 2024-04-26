@@ -4,6 +4,8 @@
 #include <stack>
 #include <vector>
 
+// TODO: Improve error messages later
+
 enum class JSONObjectType : uint8_t
 {
     EMPTY = 0,
@@ -97,7 +99,7 @@ class JSONParser
         return tokens.top();
     }
 
-    JSONObject value()
+    JSONObject parse_value()
     {
         auto token = next();
         switch (token.type)
@@ -127,9 +129,75 @@ class JSONParser
             return JSONObject(JSONObjectType::NULL_VALUE);
             break;
         default:
-            throw json_parse_error("Expected value");
+            throw json_parse_error("Expected value, found ", token);
         }
-        throw json_parse_error("Expected value");
+        throw json_parse_error("Expected value, found ", token);
+    }
+
+    std::pair<std::string, JSONObject> parse_pair()
+    {
+        auto key = next();
+
+        auto separator = next();
+
+        if (separator.type != Token::Type::COLON)
+            throw json_parse_error("Invalid key-value pair, expected \":\", found ", separator);
+
+        auto value = parse_value();
+
+
+        return std::make_pair(key.as_string(), value);
+    }
+
+    std::vector<std::pair<std::string, JSONObject>> parse_pairs()
+    {
+        std::vector<std::pair<std::string, JSONObject>> result;
+        result.push_back(parse_pair());
+        while (1)
+        {
+            auto token = peek();
+            if (token.type == Token::Type::COMMA)
+            {
+                // Remove the comma token
+                next();
+                // Find the next pair
+                result.push_back(parse_pair());
+            }
+            else
+            {
+                break;
+            }
+        }
+        return result;
+    }
+
+    JSONObject parse_object()
+    {
+        auto token = peek();
+        if (token.type != Token::Type::LEFT_BRACE)
+        {
+            // Not an object
+            return JSONObject(JSONObjectType::EMPTY);
+        }
+        // Remove the left brace
+        next();
+
+        auto pairs = parse_pairs();
+
+        // Find the closing brace
+        token = peek();
+        if (token.type != Token::Type::RIGHT_BRACE)
+        {
+            throw json_parse_error("Expected \"{\", found ", token);
+        }
+        next();
+
+        JSONObject ob;
+        for (auto &pair : pairs)
+        {
+            ob[pair.first] = pair.second;
+        }
+        return ob;
     }
 
   public:
@@ -145,8 +213,13 @@ class JSONParser
         // elements = value | (value "," elements)
         // array = "[" elements "]" | "[" "]"
         // object = "{" pairs "}" | "{" "}"
-        // json = array | object | value
-        root = value();
+        // json = object | array | value
+        
+        root = parse_object();
+        if (root.type != JSONObjectType::EMPTY)
+            return;
+
+        root = parse_value();
     }
 
     void parse(const std::string &buffer)

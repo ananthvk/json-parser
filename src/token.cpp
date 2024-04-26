@@ -56,3 +56,36 @@ void Token::debug()
     }
     std::cout << " )";
 }
+
+std::string Token::as_exception_string() const
+{
+    switch (type)
+    {
+    case Type::RIGHT_BRACE:
+        return "}";
+    case Type::LEFT_BRACE:
+        return "{";
+    case Type::RIGHT_SQUARE:
+        return "]";
+    case Type::LEFT_SQUARE:
+        return "[";
+    case Type::COMMA:
+        return ",";
+    case Type::COLON:
+        return ":";
+    case Type::STRING:
+        return std::get<std::string>(value);
+    case Type::NUMBER_REAL:
+        return std::to_string(std::get<long double>(value));
+    case Type::NUMBER_INTEGER:
+        return std::to_string(std::get<int64_t>(value));
+    case Type::LITERAL_TRUE:
+        return "true";
+    case Type::LITERAL_FALSE:
+        return "false";
+    case Type::LITERAL_NULL:
+        return "null";
+    case Type::UNKNOWN:
+        return "UNKNOWN";
+    }
+}

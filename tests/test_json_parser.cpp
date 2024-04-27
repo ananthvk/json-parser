@@ -120,6 +120,69 @@ TEST(JSONParser, MixedArrays)
     ASSERT_EQ(v[7].type, JSONObjectType::STRING);
 }
 
+TEST(JSONParser, IntegrationTest)
+{
+    JSONParser parser;
+    parser.parse(R"(
+        {
+            "productName" : "Dell Latitude 7490",
+            "productClass" : "Laptop",
+            "productPrice": 100.003,
+            "productId" : 3,
+            "available": true,
+            "additionalDetails": null,
+            "featureIds": [1, 3, 8, 7, 21, 15],
+            "dimension": {
+                "width": 13.03,
+                "depth": 8.70
+            },
+            "cpuSpecs": {
+                "manufacturer": "intel",
+                "model" : "i5-8350U",
+                "features": [2, 3, 8, 12, 16, 84]
+            }
+        }
+    )");
+    auto tree = parser.get_tree();
+    ASSERT_EQ(tree["productName"].as_string(), "Dell Latitude 7490");
+    ASSERT_EQ(tree["productClass"].as_string(), "Laptop");
+    ASSERT_NEAR(tree["productPrice"].as_real(), 100.003, 1e-5);
+    ASSERT_EQ(tree["productId"].as_integer(), 3);
+    ASSERT_EQ(tree["available"].as_bool(), true);
+    ASSERT_EQ(tree["additionalDetails"].type, JSONObjectType::NULL_VALUE);
+
+    ASSERT_EQ(tree["featureIds"].type, JSONObjectType::ARRAY);
+    auto vals = tree["featureIds"].as_vector();
+    
+    ASSERT_EQ(vals[0].as_integer(), 1);
+    ASSERT_EQ(vals[1].as_integer(), 3);
+    ASSERT_EQ(vals[2].as_integer(), 8);
+    ASSERT_EQ(vals[3].as_integer(), 7);
+    ASSERT_EQ(vals[4].as_integer(), 21);
+    ASSERT_EQ(vals[5].as_integer(), 15);
+
+    
+    auto subtree = tree["dimension"];
+    ASSERT_EQ(subtree.type, JSONObjectType::OBJECT);
+    ASSERT_EQ(subtree.size(), 2);
+    ASSERT_NEAR(subtree["width"].as_real(), 13.03, 1e-5);
+    ASSERT_NEAR(subtree["depth"].as_real(), 8.70, 1e-5);
+
+    subtree = tree["cpuSpecs"];
+    ASSERT_EQ(subtree["manufacturer"].as_string(), "intel");
+    ASSERT_EQ(subtree["model"].as_string(), "i5-8350U");
+
+    ASSERT_EQ(subtree["features"].type, JSONObjectType::ARRAY);
+    vals = subtree["features"].as_vector();
+    
+    ASSERT_EQ(vals[0].as_integer(), 2);
+    ASSERT_EQ(vals[1].as_integer(), 3);
+    ASSERT_EQ(vals[2].as_integer(), 8);
+    ASSERT_EQ(vals[3].as_integer(), 12);
+    ASSERT_EQ(vals[4].as_integer(), 16);
+    ASSERT_EQ(vals[5].as_integer(), 84);
+}
+
 int main(int argc, char *argv[])
 {
     ::testing::InitGoogleTest(&argc, argv);

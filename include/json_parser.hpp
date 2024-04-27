@@ -3,18 +3,20 @@
 #include "json_object.hpp"
 #include <stack>
 
-// TODO: Improve error messages later
-
+/*
+ * This class implements the parser logic for parsing JSON.
+ * It contains a JSONObject root, which represents the root of the parsed tree, and a Lexer object
+ * which is used to obtain tokens from the input string. This parser is a recursive descent parser.
+ * TODO: Improve error messages, also add an option to specify recursion depth
+*/
 class JSONParser
 {
     JSONObject root;
     JSONLexer lexer;
     std::stack<Token> tokens;
 
-    // Returns the token to be processed
     Token next();
 
-    // Returns the next token in the stream of tokens, (after the next() token) Token peek();
     Token peek();
 
     JSONObject parse_value();

@@ -1,5 +1,7 @@
 #include "json_parser.hpp"
 
+/// @brief  Returns the next token to be processed
+/// @return  token
 Token JSONParser::next()
 {
     // If no tokens are waiting to be processed, get the next token
@@ -11,6 +13,9 @@ Token JSONParser::next()
     return top;
 }
 
+/// @brief Returns the next token to be processed, but does not consume it 
+/// i.e. the next call to next() returns the same token. This is used to implement lookahed in this parser.
+/// @return token
 Token JSONParser::peek()
 {
     if (tokens.empty())
@@ -22,6 +27,11 @@ Token JSONParser::peek()
     return tokens.top();
 }
 
+/*
+ * A value can be  either  a string or a number or an object or an array
+ * It can also be the literals - true, false and null
+ * @return Parsed value in a JSONObject
+ */
 JSONObject JSONParser::parse_value()
 {
     auto token = next();
@@ -59,6 +69,8 @@ JSONObject JSONParser::parse_value()
     throw json_parse_error("Expected value, found ", token);
 }
 
+/// Parses a single pair, i.e. <STRING> <COLON> <VALUE>
+/// These pairs appear inside objects
 std::pair<std::string, JSONObject> JSONParser::parse_pair()
 {
     auto key = next();
@@ -74,6 +86,8 @@ std::pair<std::string, JSONObject> JSONParser::parse_pair()
     return std::make_pair(key.as_string(), value);
 }
 
+/// Parses multiple pairs, this is achieved by calling parse_pair() repeatedly
+/// when a comma is encountered after parsing a pair.
 std::vector<std::pair<std::string, JSONObject>> JSONParser::parse_pairs()
 {
     std::vector<std::pair<std::string, JSONObject>> result;
@@ -96,6 +110,8 @@ std::vector<std::pair<std::string, JSONObject>> JSONParser::parse_pairs()
     return result;
 }
 
+/// Parses an object
+/// An object in JSON is defined as { <KEY-VALUE PAIRS> } or { }
 JSONObject JSONParser::parse_object()
 {
     auto token = peek();
@@ -133,6 +149,7 @@ JSONObject JSONParser::parse_object()
     return ob;
 }
 
+/// Elements can either be a single value, or a value followed by a comma, followed by more elements
 std::vector<JSONObject> JSONParser::parse_elements()
 {
     std::vector<JSONObject> result;
@@ -155,6 +172,7 @@ std::vector<JSONObject> JSONParser::parse_elements()
     return result;
 }
 
+/// Parses a JSON array, represented by [ ] or [ <ELEMENTS> ]
 JSONObject JSONParser::parse_array()
 {
     auto token = peek();
@@ -191,6 +209,8 @@ JSONParser::JSONParser() {}
 
 JSONParser::JSONParser(const std::string &buffer) : lexer(buffer) { parse(); }
 
+/// This method calls parse_value(), which in turn recursively calls the other methods
+/// to parse the JSON input. This method should be called for parsing the input buffer.
 void JSONParser::parse()
 {
     // value = string | number | object | array | "true" | "false" | "null"

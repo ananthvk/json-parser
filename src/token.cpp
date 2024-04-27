@@ -88,4 +88,5 @@ std::string Token::as_exception_string() const
     case Type::UNKNOWN:
         return "UNKNOWN";
     }
+    return "";
 }

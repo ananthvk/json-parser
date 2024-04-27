@@ -22,6 +22,8 @@ This is an implementation of a JSON parser in C++. I built this as a learning pr
 
 ## How to run
 
+Prerequisities: A C++ 17 Compiler
+
 Firstly, install [meson](https://github.com/mesonbuild/meson) and [ninja](https://github.com/ninja-build/ninja)
 
 Clone the repository

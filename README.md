@@ -41,6 +41,16 @@ $ cd builddir
 $ ninja -j8 test
 ```
 
+## On windows
+```
+C:\> git clone https://github.com/ananthvk/json-parser
+C:\> cd json-parser
+C:\> meson setup -Ddefault_library=static builddir
+C:\> cd builddir
+C:\> meson test -v
+```
+
+Note: When running with MSVC, make sure to specify library type as static.
 
 ## Notes
 

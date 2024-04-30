@@ -26,10 +26,10 @@ JSONObject::JSONObject(JSONObjectType type) : type(type)
     switch (type)
     {
     case JSONObjectType::NUMBER_REAL:
-        value = 0.0;
+        value = static_cast<long double>(0.0);
         break;
     case JSONObjectType::NUMBER_INT:
-        value = 0;
+        value = static_cast<int64_t>(0);
         break;
     case JSONObjectType::STRING:
         value = "";
